@@ -42,13 +42,16 @@ public class LoginController extends HttpServlet {
 
                 if (idFuncionario != null) {
                     // Gera token de 6 dígitos
-                    String codigo2FA = String.format("%06d", new Random().nextInt(999999));
+                    String codigo2FA = String.format("%06d", new Random().nextInt(999999)); // <--- DESCOMENTADO
                     
                     // Salva temporariamente na sessão
-                    HttpSession session = request.getSession();
-                    session.setAttribute("2fa_codigo", codigo2FA);
-                    session.setAttribute("2fa_user_id", idFuncionario);
-
+                    HttpSession session = request.getSession(); 
+                    session.setAttribute("2fa_codigo", codigo2FA); // <--- DESCOMENTADO
+                    session.setAttribute("2fa_user_id", idFuncionario); // <--- DESCOMENTADO
+                    
+                    // AÇÃO CRUCIAL: FAZ O LOGIN DIRETO
+                    //session.setAttribute("usuarioLogado", idFuncionario); // <--- MANTIDO COMENTADO
+                    
                     // Envia por E-mail
                     EmailService emailService = new EmailService();
                     emailService.enviarEmail(email, "Seu Código de Acesso", "Seu código é: " + codigo2FA);

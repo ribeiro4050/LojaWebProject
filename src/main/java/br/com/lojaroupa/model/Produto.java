@@ -15,11 +15,15 @@ public class Produto {
     private BigDecimal preco; // Nome da coluna correto no banco
     private int estoqueMinimo;
     private String ativo;
+    
+    // NOVO ATRIBUTO: Caminho da Imagem
+    private String caminhoImagem; 
 
     public Produto() {}
 
     public Produto(int idProduto, String nome, String marca, String modelo, int idCategoria, String descricao,
-                   String unidadeMedida, String cor, String tamanho, BigDecimal preco, int estoqueMinimo, String ativo) {
+                   String unidadeMedida, String cor, String tamanho, BigDecimal preco, int estoqueMinimo, String ativo,
+                   String caminhoImagem) { // NOVO PARÂMETRO NO CONSTRUTOR
         this.idProduto = idProduto;
         this.nome = nome;
         this.marca = marca;
@@ -32,6 +36,7 @@ public class Produto {
         this.preco = preco;
         this.estoqueMinimo = estoqueMinimo;
         this.ativo = ativo;
+        this.caminhoImagem = caminhoImagem; // Inicializa o novo atributo
     }
 
     public int getIdProduto() { return idProduto; }
@@ -69,10 +74,21 @@ public class Produto {
 
     public String getAtivo() { return ativo; }
     public void setAtivo(String ativo) { this.ativo = ativo; }
+    
+    // NOVO: Getters e Setters para o caminho da imagem
+    public String getCaminhoImagem() {
+        return caminhoImagem;
+    }
+
+    public void setCaminhoImagem(String caminhoImagem) {
+        this.caminhoImagem = caminhoImagem;
+    } 
+    // FIM dos novos métodos
 
     @Override
     public String toString() {
         return "Produto [idProduto=" + idProduto + ", nome=" + nome + ", marca=" + marca + ", modelo=" + modelo +
-               ", idCategoria=" + idCategoria + ", preco=" + preco + ", estoqueMinimo=" + estoqueMinimo + ", ativo=" + ativo + "]";
+               ", idCategoria=" + idCategoria + ", preco=" + preco + ", estoqueMinimo=" + estoqueMinimo + ", ativo=" + ativo +
+               ", caminhoImagem=" + caminhoImagem + "]"; // Opcional: Adicionar ao toString
     }
 }

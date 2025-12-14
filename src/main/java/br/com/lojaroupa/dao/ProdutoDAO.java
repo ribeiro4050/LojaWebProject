@@ -14,13 +14,13 @@ public class ProdutoDAO {
 
     // 1. INSERIR (CREATE)
     public void inserir(Produto produto) {
-        String sql = "INSERT INTO produtos (nome, marca, modelo, idCategoria, descricao, unidadeMedida, cor, tamanho, preco, ativo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        // SQL ATUALIZADO: Adiciona a coluna caminhoImagem (ou o nome que você usou no BD)
+        String sql = "INSERT INTO produtos (nome, marca, modelo, idCategoria, descricao, unidadeMedida, cor, tamanho, preco, ativo, caminhoImagem) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
         Connection conn = null;
         PreparedStatement stmt = null;
 
         try {
-            // AQUI ESTÁ A MÁGICA: Usamos a fábrica nova
             conn = new ConnectionFactory().getConnection();
             
             stmt = conn.prepareStatement(sql);
@@ -34,6 +34,8 @@ public class ProdutoDAO {
             stmt.setString(8, produto.getTamanho());
             stmt.setBigDecimal(9, produto.getPreco());
             stmt.setString(10, produto.getAtivo());
+            // NOVO: Seta o caminho da imagem (Parâmetro 11)
+            stmt.setString(11, produto.getCaminhoImagem()); 
 
             stmt.executeUpdate();
             System.out.println("✅ Produto '" + produto.getNome() + "' inserido com sucesso!");
@@ -49,7 +51,8 @@ public class ProdutoDAO {
     // 2. LISTAR TODOS (READ)
     public List<Produto> listarTodos() {
         List<Produto> produtos = new ArrayList<>();
-        String sql = "SELECT * FROM produtos ORDER BY nome";
+        // SQL ATUALIZADO: Buscando a coluna caminhoImagem (ou o nome que você usou no BD)
+        String sql = "SELECT idProduto, nome, marca, modelo, idCategoria, descricao, unidadeMedida, cor, tamanho, preco, ativo, caminhoImagem FROM produtos ORDER BY nome";
         
         Connection conn = null;
         PreparedStatement stmt = null;
@@ -74,6 +77,9 @@ public class ProdutoDAO {
                 produto.setPreco(rs.getBigDecimal("preco"));
                 produto.setAtivo(rs.getString("ativo"));
                 
+                // NOVO: Setando o caminho da imagem no Model
+                produto.setCaminhoImagem(rs.getString("caminhoImagem"));
+                
                 produtos.add(produto);
             }
 
@@ -89,7 +95,8 @@ public class ProdutoDAO {
     // 3. BUSCAR POR ID (READ SINGLE)
     public Produto buscarPorId(int id) {
         Produto produto = null;
-        String sql = "SELECT * FROM produtos WHERE idProduto = ?";
+        // SQL ATUALIZADO: Buscando a coluna caminhoImagem (ou o nome que você usou no BD)
+        String sql = "SELECT idProduto, nome, marca, modelo, idCategoria, descricao, unidadeMedida, cor, tamanho, preco, ativo, caminhoImagem FROM produtos WHERE idProduto = ?";
         
         Connection conn = null;
         PreparedStatement stmt = null;
@@ -114,6 +121,8 @@ public class ProdutoDAO {
                 produto.setTamanho(rs.getString("tamanho"));
                 produto.setPreco(rs.getBigDecimal("preco"));
                 produto.setAtivo(rs.getString("ativo"));
+                // NOVO: Setando o caminho da imagem no Model
+                produto.setCaminhoImagem(rs.getString("caminhoImagem"));
             }
         } catch (SQLException e) {
             System.err.println("Erro ao buscar produto por ID: " + e.getMessage());
@@ -126,7 +135,8 @@ public class ProdutoDAO {
 
     // 4. ATUALIZAR (UPDATE)
     public void atualizar(Produto produto) {
-        String sql = "UPDATE produtos SET nome = ?, marca = ?, modelo = ?, idCategoria = ?, descricao = ?, unidadeMedida = ?, cor = ?, tamanho = ?, preco = ?, ativo = ? WHERE idProduto = ?";
+        // SQL ATUALIZADO: Inclui a atualização da coluna caminhoImagem
+        String sql = "UPDATE produtos SET nome = ?, marca = ?, modelo = ?, idCategoria = ?, descricao = ?, unidadeMedida = ?, cor = ?, tamanho = ?, preco = ?, ativo = ?, caminhoImagem = ? WHERE idProduto = ?";
         
         Connection conn = null;
         PreparedStatement stmt = null;
@@ -144,7 +154,9 @@ public class ProdutoDAO {
             stmt.setString(8, produto.getTamanho());
             stmt.setBigDecimal(9, produto.getPreco());
             stmt.setString(10, produto.getAtivo());
-            stmt.setInt(11, produto.getIdProduto());
+            // NOVO: Seta o caminho da imagem para atualização (Parâmetro 11)
+            stmt.setString(11, produto.getCaminhoImagem()); 
+            stmt.setInt(12, produto.getIdProduto());
 
             int linhasAfetadas = stmt.executeUpdate();
             if (linhasAfetadas > 0) {
@@ -205,7 +217,8 @@ public class ProdutoDAO {
         System.out.println("📦 Listando produtos do banco...");
         List<Produto> lista = dao.listarTodos();
         for (Produto p : lista) {
-            System.out.println(p.getIdProduto() + " - " + p.getNome() + " | R$ " + p.getPreco());
+            // Agora imprime o caminho da imagem para ver se está vindo do BD
+            System.out.println(p.getIdProduto() + " - " + p.getNome() + " | R$ " + p.getPreco() + " | Imagem: " + p.getCaminhoImagem());
         }
     }
 }

@@ -13,8 +13,8 @@ import jakarta.mail.internet.MimeMessage;
 public class EmailService {
 
     // PREENCHA COM SEUS DADOS DO MAILTRAP AQUI
-    private final String username = "7e7b213844aa5d";
-    private final String password = "833dd8e4578e32";
+    private final String username = "4be84ef9a08db4";
+    private final String password = "e802fb4643dd22";
 
     public void enviarEmail(String destinatario, String assunto, String mensagemTexto) {
         

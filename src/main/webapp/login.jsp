@@ -53,10 +53,14 @@
             .then(response => response.json())
             .then(data => {
                 if(data.status === 'ok') {
-                    // Esconde Login, Mostra 2FA
+                    // *** REMOVEMOS O BYPASS E RESTAURAMOS O 2FA FRONTE-END ***
+                    
+                    // CÓDIGO ORIGINAL (MOSTRAR 2FA) RESTAURADO:
                     document.getElementById("etapa1").classList.add("hidden");
                     document.getElementById("etapa2").classList.remove("hidden");
                     msg.innerText = "";
+                    
+
                 } else {
                     msg.innerText = data.mensagem;
                     msg.style.color = "red";

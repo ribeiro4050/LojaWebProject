@@ -14,7 +14,7 @@ public class ConnectionFactory {
 			// Conecta ao banco 'lojaroupa_web'
 			// IMPORTANTE: Troque 'suasenha' pela senha do seu MySQL
 			return DriverManager.getConnection(
-					"jdbc:mysql://localhost:3306/lojaroupa?useTimezone=true&serverTimezone=UTC", 
+					"jdbc:mysql://localhost:3306/lojaroupa?useTimezone=true&serverTimezone=UTC&connectTimeout=5000",
 					"root", 
 					"");
 			

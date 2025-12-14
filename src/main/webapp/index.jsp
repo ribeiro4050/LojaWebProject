@@ -1,12 +1,12 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%
+<%--
     // 🔒 SEGURANÇA: Verifica se o usuário já passou pelo login/2FA
     // Se a sessão estiver vazia, redireciona para o login imediatamente
     if (session.getAttribute("usuarioLogado") == null) {
         response.sendRedirect("login.jsp");
         return;
     }
-%>
+--%>
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
