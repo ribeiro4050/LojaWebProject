@@ -85,7 +85,7 @@
             .then(data => {
                 if(data.status === 'ok') {
                     // Redireciona para a vitrine se der certo
-                    window.location.href = "${pageContext.request.contextPath}/index.jsp";
+                    window.location.href = "${pageContext.request.contextPath}/home";
                 } else {
                     msg.innerText = data.mensagem;
                     msg.style.color = "red";

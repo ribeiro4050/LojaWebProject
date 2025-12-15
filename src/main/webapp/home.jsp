@@ -1,6 +1,8 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %> <%-- Adicionado para compatibilidade com o navbar --%>
+
 <%-- Esta linha informa ao JSP que a lista de produtos virá do Servlet --%>
 <jsp:useBean id="listaProdutos" scope="request" type="java.util.List"/>
 
@@ -10,8 +12,18 @@
     <meta charset="UTF-8">
     <title>Home - Loja de Roupas</title>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f8f9fa; }
-        .container { width: 90%; margin: 40px auto; }
+        /* Ajuste no corpo para compensar o navbar se for fixo ou apenas por estética */
+        body { 
+            font-family: Arial, sans-serif; 
+            background-color: #f8f9fa; 
+            margin: 0; /* Adicionado para evitar margem dupla */
+            padding-top: 50px; /* Adiciona espaço no topo para o navbar */
+        }
+        .container { 
+            width: 90%; 
+            margin: 40px auto; 
+            padding-top: 0; /* Remove padding desnecessário */
+        }
         h1 { text-align: center; color: #333; margin-bottom: 30px; }
         
         /* Layout Grid para os Cards */
@@ -81,6 +93,9 @@
     </style>
 </head>
 <body>
+
+<%-- ADIÇÃO DO NAVBAR AQUI --%>
+<jsp:include page="navbar.jsp"/>
 
 <div class="container">
     <h1>Nossa Coleção</h1>

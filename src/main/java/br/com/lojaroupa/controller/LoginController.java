@@ -13,13 +13,16 @@ import javax.servlet.http.HttpSession;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
-import br.com.lojaroupa.dao.FuncionarioDAO;
+// Importações atualizadas para usar ClienteDAO e Cliente
+import br.com.lojaroupa.dao.ClienteDAO; 
+import br.com.lojaroupa.model.Cliente; 
 import br.com.lojaroupa.util.EmailService;
 
 @WebServlet("/auth")
 public class LoginController extends HttpServlet {
     private static final long serialVersionUID = 1L;
-
+    
+    // Método que lida com o login AJAX (POST)
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         // Configurações padrão de resposta JSON
         response.setContentType("application/json");
@@ -37,25 +40,28 @@ public class LoginController extends HttpServlet {
                 String email = request.getParameter("email");
                 String senha = request.getParameter("senha");
 
-                FuncionarioDAO dao = new FuncionarioDAO();
-                Integer idFuncionario = dao.autenticar(email, senha);
+                // *** MUDANÇA: USANDO CLIENTE DAO ***
+                ClienteDAO dao = new ClienteDAO(); 
+                Cliente clienteLogado = dao.buscarClientePorEmailESenha(email, senha); // Usa o método que criamos
 
-                if (idFuncionario != null) {
+                if (clienteLogado != null) {
                     // Gera token de 6 dígitos
-                    String codigo2FA = String.format("%06d", new Random().nextInt(999999)); // <--- DESCOMENTADO
+                    String codigo2FA = String.format("%06d", new Random().nextInt(999999));
                     
                     // Salva temporariamente na sessão
                     HttpSession session = request.getSession(); 
-                    session.setAttribute("2fa_codigo", codigo2FA); // <--- DESCOMENTADO
-                    session.setAttribute("2fa_user_id", idFuncionario); // <--- DESCOMENTADO
+                    session.setAttribute("2fa_codigo", codigo2FA); 
                     
-                    // AÇÃO CRUCIAL: FAZ O LOGIN DIRETO
-                    //session.setAttribute("usuarioLogado", idFuncionario); // <--- MANTIDO COMENTADO
+                    // *** MUDANÇA: SALVA O OBJETO CLIENTE TEMPORARIAMENTE ***
+                    session.setAttribute("2fa_cliente", clienteLogado); 
                     
-                    // Envia por E-mail
+                    // Envia por E-mail (o EmailService precisa estar configurado, ex: para Mailtrap)
                     EmailService emailService = new EmailService();
                     emailService.enviarEmail(email, "Seu Código de Acesso", "Seu código é: " + codigo2FA);
 
+                    // Imprime no console para facilitar o teste local
+                    System.out.println("--- CÓDIGO 2FA ENVIADO para " + email + ": " + codigo2FA + " ---");
+                    
                     jsonRetorno.addProperty("status", "ok");
                 } else {
                     jsonRetorno.addProperty("status", "erro");
@@ -68,12 +74,20 @@ public class LoginController extends HttpServlet {
             } else if ("validar2fa".equals(acao)) {
                 String codigoDigitado = request.getParameter("codigo");
                 HttpSession session = request.getSession();
+                
                 String codigoReal = (String) session.getAttribute("2fa_codigo");
+                // *** MUDANÇA: RECUPERA O OBJETO CLIENTE ***
+                Cliente clienteParaLogar = (Cliente) session.getAttribute("2fa_cliente");
 
-                if (codigoReal != null && codigoReal.equals(codigoDigitado)) {
+                if (codigoReal != null && clienteParaLogar != null && codigoReal.equals(codigoDigitado)) {
                     // Autenticação finalizada com sucesso!
-                    session.setAttribute("usuarioLogado", session.getAttribute("2fa_user_id"));
-                    session.removeAttribute("2fa_codigo"); // Limpa o token usado
+                    
+                    // *** MUDANÇA: SALVA O OBJETO CLIENTE FINALMENTE LOGADO ***
+                    session.setAttribute("clienteLogado", clienteParaLogar); 
+                    
+                    // Limpa os atributos temporários de 2FA
+                    session.removeAttribute("2fa_codigo"); 
+                    session.removeAttribute("2fa_cliente"); 
                     
                     jsonRetorno.addProperty("status", "ok");
                 } else {
@@ -85,9 +99,9 @@ public class LoginController extends HttpServlet {
             // AÇÃO 3: LOGOUT (Sair do sistema)
             // ==========================================
             } else if ("logout".equals(acao)) {
-                HttpSession session = request.getSession(false); // Pega a sessão se existir
+                HttpSession session = request.getSession(false); 
                 if (session != null) {
-                    session.invalidate(); // Destroi a sessão
+                    session.invalidate(); 
                 }
                 jsonRetorno.addProperty("status", "ok");
             }
@@ -100,5 +114,12 @@ public class LoginController extends HttpServlet {
 
         // Devolve o JSON para o JavaScript
         response.getWriter().write(gson.toJson(jsonRetorno));
+    }
+    
+    // Método que lida com o acesso direto via URL (GET)
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        request.getRequestDispatcher("/login.jsp").forward(request, response);
     }
 }
