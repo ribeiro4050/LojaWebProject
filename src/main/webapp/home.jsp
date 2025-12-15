@@ -127,7 +127,6 @@
                     </button>
                 </form>
                 
-                <a href="#" class="buy-button">Ver Detalhes (Em Breve)</a>
             </div>
         </c:forEach>
     </div>

@@ -49,7 +49,7 @@
             margin-left: 10px;
         }
         .continue-btn {
-            background-color: #6c757d;
+            background-color: #1074cc;
             color: white;
         }
         .checkout-btn {
@@ -143,7 +143,7 @@
             
             <div class="actions">
                 <a href="${pageContext.request.contextPath}/home" class="continue-btn">Continuar Comprando</a>
-                <a href="${pageContext.request.contextPath}/checkout" class="checkout-btn">Finalizar Compra</a>
+                <a href="${pageContext.request.contextPath}/checkout" class="btn btn-success">Finalizar Compra</a>
             </div>
         </c:otherwise>
     </c:choose>
