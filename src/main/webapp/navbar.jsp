@@ -105,7 +105,7 @@
 </style>
 
 <nav class="navbar">
-    <a href="${pageContext.request.contextPath}/home" class="navbar-logo">ARTWALK Inspire</a>
+    <a href="${pageContext.request.contextPath}/home" class="navbar-logo">LG clothes</a>
     
     <div class="navbar-links">
         <a href="#">Lançamentos</a>
