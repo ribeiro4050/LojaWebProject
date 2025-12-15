@@ -13,22 +13,7 @@ import br.com.lojaroupa.util.ConnectionFactory;
 
 public class ClienteDAO {
 
-    /**
-     * Método auxiliar para fechar recursos SQL.
-     */
-    private void fecharConexao(Connection conn, PreparedStatement stmt, ResultSet rs) {
-        try {
-            if (rs != null) rs.close();
-            if (stmt != null) stmt.close();
-            if (conn != null) conn.close();
-        } catch (SQLException e) {
-            System.err.println("Erro ao fechar recursos do banco: " + e.getMessage());
-        }
-    }
-
-    // ===============================================
-    // 1. SALVAR (CREATE)
-    // ===============================================
+    // ... (MÉTODO salvarCliente MANTIDO SEM ALTERAÇÕES) ...
     
     /**
      * Salva um novo cliente no banco de dados.
@@ -45,7 +30,6 @@ public class ClienteDAO {
         ResultSet rs = null;
 
         try {
-            // Obtém a conexão (mantendo a instanciação, como combinado)
             conn = new ConnectionFactory().getConnection();
             stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             
@@ -55,7 +39,6 @@ public class ClienteDAO {
             stmt.setString(4, cliente.getTelefone()); 
             stmt.setString(5, cliente.getEndereco()); 
             stmt.setString(6, cliente.getCep()); 
-            // Converte LocalDate para java.sql.Date
             stmt.setDate(7, Date.valueOf(LocalDate.now())); 
             stmt.setString(8, cliente.getSenha()); 
             
@@ -73,17 +56,18 @@ public class ClienteDAO {
         } catch (SQLException e) {
             throw new RuntimeException("Erro ao salvar o cliente no banco: " + e.getMessage(), e);
         } finally {
-            fecharConexao(conn, stmt, rs);
+            try {
+                if (rs != null) rs.close();
+                if (stmt != null) stmt.close();
+                if (conn != null) conn.close();
+            } catch (SQLException e) { }
         }
     }
 
-    // ===============================================
-    // 2. VERIFICAR EXISTÊNCIA (READ/VALIDAÇÃO AJAX)
-    // ===============================================
+    // ... (MÉTODO existeCliente MANTIDO SEM ALTERAÇÕES) ...
 
     /**
      * Verifica se um cliente já existe no banco (pelo CPF ou E-mail).
-     * Este é o método que usaremos para a validação AJAX.
      * @param campo O nome da coluna ('cpf' ou 'email').
      * @param valor O valor a ser pesquisado.
      * @return true se o cliente existir, false caso contrário.
@@ -93,7 +77,6 @@ public class ClienteDAO {
             throw new IllegalArgumentException("Campo de pesquisa inválido. Use 'cpf' ou 'email'.");
         }
         
-        // A SQL construída dinamicamente é funcional, mas requer a validação acima.
         String sql = "SELECT COUNT(*) FROM clientes WHERE " + campo + " = ?";
         
         Connection conn = null;
@@ -101,7 +84,6 @@ public class ClienteDAO {
         ResultSet rs = null;
 
         try {
-            // Obtém a conexão (mantendo a instanciação, como combinado)
             conn = new ConnectionFactory().getConnection();
             stmt = conn.prepareStatement(sql);
             stmt.setString(1, valor);
@@ -116,12 +98,16 @@ public class ClienteDAO {
         } catch (SQLException e) {
             throw new RuntimeException("Erro ao verificar a existência do cliente por " + campo + ": " + e.getMessage(), e);
         } finally {
-            fecharConexao(conn, stmt, rs);
+            try {
+                if (rs != null) rs.close();
+                if (stmt != null) stmt.close();
+                if (conn != null) conn.close();
+            } catch (SQLException e) { }
         }
     }
     
     // ==========================================================
-    // 3. BUSCAR PARA LOGIN (READ)
+    // MÉTODO NOVO: PARA LOGIN
     // ==========================================================
     
     /**
@@ -140,11 +126,10 @@ public class ClienteDAO {
         Cliente cliente = null;
 
         try {
-            // Obtém a conexão (mantendo a instanciação, como combinado)
             conn = new ConnectionFactory().getConnection();
             stmt = conn.prepareStatement(sql);
             stmt.setString(1, email);
-            stmt.setString(2, senha); 
+            stmt.setString(2, senha); // ATENÇÃO: Se usar Hash no futuro, esta linha deve mudar.
             
             rs = stmt.executeQuery();
             
@@ -173,7 +158,11 @@ public class ClienteDAO {
         } catch (SQLException e) {
             throw new RuntimeException("Erro ao buscar cliente para login: " + e.getMessage(), e);
         } finally {
-            fecharConexao(conn, stmt, rs);
+            try {
+                if (rs != null) rs.close();
+                if (stmt != null) stmt.close();
+                if (conn != null) conn.close();
+            } catch (SQLException e) { }
         }
     }
 }

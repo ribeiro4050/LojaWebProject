@@ -5,7 +5,6 @@ import br.com.lojaroupa.model.ItemCarrinho;
 import br.com.lojaroupa.dao.ProdutoDAO;
 
 import java.io.IOException;
-import java.io.PrintWriter; // Importação necessária para enviar JSON
 import java.util.ArrayList;
 import java.util.List;
 import javax.servlet.ServletException;
@@ -15,11 +14,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-@WebServlet("/carrinho") 
+@WebServlet("/carrinho") // Mapeia o Servlet para a URL /carrinho
 public class CarrinhoServlet extends HttpServlet {
     
-    private static final long serialVersionUID = 1L; // Adicionado para boas práticas
-
     /**
      * Trata requisições GET. Usado para:
      * 1. Exibir a página do carrinho (default).
@@ -32,16 +29,17 @@ public class CarrinhoServlet extends HttpServlet {
         String acao = request.getParameter("acao");
         
         if ("remover".equals(acao)) {
+            // Se a URL contém ?acao=remover, chama a lógica de remoção
             removerItem(request, response);
         } else {
+            // Se não for uma ação específica (apenas /carrinho), exibe o JSP
             request.getRequestDispatcher("/carrinho.jsp").forward(request, response);
         }
     }
     
     /**
-     * Trata requisições POST. Usado para:
-     * 1. Processar a ação de 'adicionar' item (formulário home.jsp).
-     * 2. Processar a ação de 'atualizar' item (via AJAX no carrinho.jsp).
+     * Trata requisições POST. Usado principalmente para:
+     * 1. Processar a ação de 'adicionar' item (via formulário da home.jsp).
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) 
@@ -59,98 +57,17 @@ public class CarrinhoServlet extends HttpServlet {
             case "adicionar":
                 adicionarItem(request, response);
                 break;
-            case "atualizar":
-                atualizarItem(request, response); // NOVO: Chama a função de atualização AJAX
-                break;
+            // TODO: Implementar 'atualizar' aqui
             default:
+                // Redireciona para o GET que exibirá a página
                 response.sendRedirect(request.getContextPath() + "/carrinho");
         }
     }
 
     // ===========================================
-    // --- NOVO MÉTODO: Lógica de Atualização AJAX ---
+    // --- Lógica de Negócio do Carrinho ---
     // ===========================================
-    @SuppressWarnings("unchecked")
-    private void atualizarItem(HttpServletRequest request, HttpServletResponse response) 
-            throws IOException {
-        
-        // Parâmetros necessários
-        String idProdutoStr = request.getParameter("idProduto");
-        String novaQuantidadeStr = request.getParameter("quantidade");
-        
-        // Configura a resposta como JSON
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        PrintWriter out = response.getWriter();
-        
-        // 1. Validação básica de parâmetros
-        if (idProdutoStr == null || novaQuantidadeStr == null) {
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            out.print("{\"status\": \"erro\", \"mensagem\": \"ID ou Quantidade inválidos.\"}");
-            out.flush();
-            return;
-        }
-
-        try {
-            int idProduto = Integer.parseInt(idProdutoStr);
-            int novaQuantidade = Integer.parseInt(novaQuantidadeStr);
-            
-            HttpSession session = request.getSession();
-            List<ItemCarrinho> carrinho = (List<ItemCarrinho>) session.getAttribute("carrinho");
-            
-            boolean sucesso = false;
-
-            if (carrinho != null) {
-                // 2. Procura e atualiza o item
-                ItemCarrinho itemParaRemover = null;
-                for (ItemCarrinho item : carrinho) {
-                    if (item.getProduto().getIdProduto() == idProduto) {
-                        
-                        if (novaQuantidade > 0) {
-                            // Atualiza a quantidade
-                            item.setQuantidade(novaQuantidade);
-                            sucesso = true;
-                        } else {
-                            // Quantidade zero ou negativa, marca para remoção
-                            itemParaRemover = item;
-                            sucesso = true;
-                        }
-                        break;
-                    }
-                }
-                
-                // 3. Remove o item se a quantidade for zero
-                if(itemParaRemover != null) {
-                    carrinho.remove(itemParaRemover);
-                }
-                
-                // 4. Salva o carrinho atualizado na sessão
-                session.setAttribute("carrinho", carrinho); 
-            }
-            
-            // 5. Envia a resposta de sucesso
-            if (sucesso) {
-                out.print("{\"status\": \"ok\", \"mensagem\": \"Carrinho atualizado.\"}");
-            } else {
-                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                out.print("{\"status\": \"erro\", \"mensagem\": \"Item não encontrado no carrinho.\"}");
-            }
-
-        } catch (NumberFormatException e) {
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            out.print("{\"status\": \"erro\", \"mensagem\": \"Formato de número incorreto.\"}");
-        } catch (Exception e) {
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            out.print("{\"status\": \"erro\", \"mensagem\": \"Erro interno no servidor.\"}");
-        } finally {
-            out.flush();
-        }
-    }
     
-    // ===========================================
-    // --- Lógica de Adicionar (mantida) ---
-    // ===========================================
-    @SuppressWarnings("unchecked")
     private void adicionarItem(HttpServletRequest request, HttpServletResponse response) 
             throws IOException, ServletException {
         
@@ -166,7 +83,7 @@ public class CarrinhoServlet extends HttpServlet {
         int idProduto = Integer.parseInt(idProdutoStr);
         int quantidade = Integer.parseInt(quantidadeStr);
         
-        // 2. Buscar o Produto no banco de dados
+        // 2. Buscar o Produto no banco de dados (Necessário para obter preço e dados completos)
         ProdutoDAO produtoDAO = new ProdutoDAO(); 
         Produto produto = produtoDAO.buscarPorId(idProduto); 
 
@@ -175,9 +92,12 @@ public class CarrinhoServlet extends HttpServlet {
             // 3. Acessar a Sessão HTTP para obter/criar o carrinho
             HttpSession session = request.getSession();
             
+            // 
+            // A lista do carrinho é guardada como um atributo de sessão
             List<ItemCarrinho> carrinho = (List<ItemCarrinho>) session.getAttribute("carrinho");
             
             if (carrinho == null) {
+                // Se o carrinho ainda não existe na sessão, cria uma nova lista
                 carrinho = new ArrayList<>();
             }
             
@@ -185,6 +105,7 @@ public class CarrinhoServlet extends HttpServlet {
             boolean encontrado = false;
             for (ItemCarrinho item : carrinho) {
                 if (item.getProduto().getIdProduto() == idProduto) {
+                    // Se encontrado, apenas incrementa a quantidade
                     item.setQuantidade(item.getQuantidade() + quantidade);
                     encontrado = true;
                     break;
@@ -209,10 +130,6 @@ public class CarrinhoServlet extends HttpServlet {
         }
     }
 
-    // ===========================================
-    // --- Lógica de Remover (mantida, mas sem o supresswarnings) ---
-    // ===========================================
-    @SuppressWarnings("unchecked")
     private void removerItem(HttpServletRequest request, HttpServletResponse response) 
             throws IOException {
         
@@ -229,6 +146,7 @@ public class CarrinhoServlet extends HttpServlet {
             if (carrinho != null) {
                 // 3. Iterar e remover o item
                 ItemCarrinho itemParaRemover = null;
+                // Usamos um loop for aprimorado, mas a remoção é feita fora dele
                 for (ItemCarrinho item : carrinho) {
                     if (item.getProduto().getIdProduto() == idProduto) {
                         itemParaRemover = item;
