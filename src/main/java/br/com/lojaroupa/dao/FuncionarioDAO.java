@@ -117,4 +117,40 @@ public class FuncionarioDAO {
             e.printStackTrace();
         }
     }
+ // NOVO MÉTODO PARA BUSCAR O OBJETO COMPLETO DO FUNCIONÁRIO
+    public Funcionario buscarPorEmailESenha(String email, String senha) {
+        String sql = "SELECT * FROM funcionarios WHERE email = ? AND senha = ?";
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        Funcionario f = null;
+
+        try {
+            conn = new ConnectionFactory().getConnection();
+            stmt = conn.prepareStatement(sql);
+            stmt.setString(1, email);
+            stmt.setString(2, senha);
+            
+            rs = stmt.executeQuery();
+            
+            if (rs.next()) {
+                f = new Funcionario();
+                f.setIdFuncionario(rs.getInt("idFuncionario"));
+                f.setEmail(rs.getString("email"));
+                f.setSenha(rs.getString("senha"));
+                f.setIdNivelUsuario(rs.getInt("idNivelUsuario"));
+                f.setNome(rs.getString("nome"));
+                f.setCpf(rs.getString("cpf"));
+                f.setEndereco(rs.getString("endereco"));
+                f.setCep(rs.getString("cep"));
+                f.setTelefone(rs.getString("telefone"));
+                f.setAtivo(rs.getString("ativo"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            fecharConexao(conn, stmt, rs); // Reutiliza seu método auxiliar
+        }
+        return f;
+    }
 }

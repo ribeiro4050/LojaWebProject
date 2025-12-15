@@ -13,16 +13,18 @@ import javax.servlet.http.HttpSession;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
-// Importações atualizadas para usar ClienteDAO e Cliente
+// Importações dos DAOs e Models
 import br.com.lojaroupa.dao.ClienteDAO; 
 import br.com.lojaroupa.model.Cliente; 
+import br.com.lojaroupa.dao.FuncionarioDAO; // NOVO: DAO do Funcionário
+import br.com.lojaroupa.model.Funcionario; // NOVO: Model do Funcionário
+
 import br.com.lojaroupa.util.EmailService;
 
 @WebServlet("/auth")
 public class LoginController extends HttpServlet {
     private static final long serialVersionUID = 1L;
     
-    // Método que lida com o login AJAX (POST)
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         // Configurações padrão de resposta JSON
         response.setContentType("application/json");
@@ -39,28 +41,45 @@ public class LoginController extends HttpServlet {
             if ("login".equals(acao)) {
                 String email = request.getParameter("email");
                 String senha = request.getParameter("senha");
+                
+                // VARIÁVEIS DE AUTENTICAÇÃO UNIFICADAS
+                Object usuarioAutenticado = null;
+                String tipoUsuario = null; // "cliente" ou "funcionario"
 
-                // *** MUDANÇA: USANDO CLIENTE DAO ***
-                ClienteDAO dao = new ClienteDAO(); 
-                Cliente clienteLogado = dao.buscarClientePorEmailESenha(email, senha); // Usa o método que criamos
+                // 1. TENTATIVA COMO CLIENTE
+                ClienteDAO clienteDAO = new ClienteDAO();
+                Cliente cliente = clienteDAO.buscarClientePorEmailESenha(email, senha);
 
-                if (clienteLogado != null) {
+                if (cliente != null) {
+                    usuarioAutenticado = cliente;
+                    tipoUsuario = "cliente";
+                } else {
+                    // 2. SE NÃO FOR CLIENTE, TENTA COMO FUNCIONÁRIO
+                    FuncionarioDAO funcionarioDAO = new FuncionarioDAO();
+                    // Assumimos que o método buscarPorEmailESenha() foi adicionado ao FuncionarioDAO
+                    Funcionario funcionario = funcionarioDAO.buscarPorEmailESenha(email, senha);
+
+                    if (funcionario != null) {
+                        usuarioAutenticado = funcionario;
+                        tipoUsuario = "funcionario";
+                    }
+                }
+
+                // 3. VERIFICA SE ALGUÉM FOI AUTENTICADO
+                if (usuarioAutenticado != null) {
                     // Gera token de 6 dígitos
                     String codigo2FA = String.format("%06d", new Random().nextInt(999999));
                     
-                    // Salva temporariamente na sessão
                     HttpSession session = request.getSession(); 
                     session.setAttribute("2fa_codigo", codigo2FA); 
-                    
-                    // *** MUDANÇA: SALVA O OBJETO CLIENTE TEMPORARIAMENTE ***
-                    session.setAttribute("2fa_cliente", clienteLogado); 
-                    
-                    // Envia por E-mail (o EmailService precisa estar configurado, ex: para Mailtrap)
+                    session.setAttribute("2fa_usuario", usuarioAutenticado); // Salva Cliente OU Funcionario
+                    session.setAttribute("2fa_tipo", tipoUsuario);         // Salva o tipo (para uso futuro)
+
+                    // Envia por E-mail (usando o email fornecido)
                     EmailService emailService = new EmailService();
                     emailService.enviarEmail(email, "Seu Código de Acesso", "Seu código é: " + codigo2FA);
 
-                    // Imprime no console para facilitar o teste local
-                    System.out.println("--- CÓDIGO 2FA ENVIADO para " + email + ": " + codigo2FA + " ---");
+                    System.out.println("--- CÓDIGO 2FA ENVIADO para " + email + " (" + tipoUsuario.toUpperCase() + "): " + codigo2FA + " ---");
                     
                     jsonRetorno.addProperty("status", "ok");
                 } else {
@@ -76,18 +95,23 @@ public class LoginController extends HttpServlet {
                 HttpSession session = request.getSession();
                 
                 String codigoReal = (String) session.getAttribute("2fa_codigo");
-                // *** MUDANÇA: RECUPERA O OBJETO CLIENTE ***
-                Cliente clienteParaLogar = (Cliente) session.getAttribute("2fa_cliente");
+                Object usuarioParaLogar = session.getAttribute("2fa_usuario"); // Cliente ou Funcionario
+                String tipoUsuario = (String) session.getAttribute("2fa_tipo"); // Tipo
 
-                if (codigoReal != null && clienteParaLogar != null && codigoReal.equals(codigoDigitado)) {
+                if (codigoReal != null && usuarioParaLogar != null && codigoReal.equals(codigoDigitado)) {
                     // Autenticação finalizada com sucesso!
                     
-                    // *** MUDANÇA: SALVA O OBJETO CLIENTE FINALMENTE LOGADO ***
-                    session.setAttribute("clienteLogado", clienteParaLogar); 
+                    // Salva na sessão com a chave específica (clienteLogado ou funcionarioLogado)
+                    if ("funcionario".equals(tipoUsuario)) {
+                         session.setAttribute("funcionarioLogado", usuarioParaLogar); 
+                    } else {
+                         session.setAttribute("clienteLogado", usuarioParaLogar); 
+                    }
                     
                     // Limpa os atributos temporários de 2FA
                     session.removeAttribute("2fa_codigo"); 
-                    session.removeAttribute("2fa_cliente"); 
+                    session.removeAttribute("2fa_usuario"); 
+                    session.removeAttribute("2fa_tipo");
                     
                     jsonRetorno.addProperty("status", "ok");
                 } else {
@@ -116,7 +140,6 @@ public class LoginController extends HttpServlet {
         response.getWriter().write(gson.toJson(jsonRetorno));
     }
     
-    // Método que lida com o acesso direto via URL (GET)
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {

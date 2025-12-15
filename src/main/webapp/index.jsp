@@ -1,17 +1,10 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%--
-    // 🔒 SEGURANÇA: Verifica se o usuário já passou pelo login/2FA
-    // Se a sessão estiver vazia, redireciona para o login imediatamente
-    if (session.getAttribute("usuarioLogado") == null) {
-        response.sendRedirect("login.jsp");
-        return;
-    }
---%>
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Loja de Roupas - Vitrine de Produtos</title>
+    <title>Loja de Roupas - Painel de Produtos</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f4f4f9; }
         
@@ -38,7 +31,7 @@
 <body>
 
     <div class="header">
-        <h1>Vitrine de Produtos</h1>
+        <h1>Painel de Gerenciamento de Produtos</h1>
         <button class="btn btn-logout" onclick="fazerLogout()"> Sair</button>
     </div>
     
@@ -65,7 +58,8 @@
         // Função para Buscar Produtos
         function carregarProdutos() {
             document.getElementById("status").innerText = "Carregando dados...";
-            const url = '${pageContext.request.contextPath}/produtos';
+            // URL para o ProdutoController que retorna JSON
+            const url = '${pageContext.request.contextPath}/produtos'; 
 
             fetch(url) 
                 .then(response => {
@@ -113,18 +107,23 @@
                 })
                 .catch(error => {
                     console.error('Erro:', error);
-                    document.getElementById("status").innerText = "Erro ao carregar.";
+                    document.getElementById("status").innerText = "Erro ao carregar. Verifique o ProdutoController.";
                 });
         }
 
-        // Função para Sair (Logout)
+        // Função para Sair (Logout) - CORRIGIDA
         function fazerLogout() {
             if(confirm("Deseja realmente sair?")) {
-                fetch('${pageContext.request.contextPath}/auth?acao=logout', { method: 'POST' })
-                    .then(() => {
-                        // Redireciona para o login após limpar a sessão
-                        window.location.href = 'login.jsp';
-                    });
+                // Chama o Servlet /auth via POST
+                fetch('${pageContext.request.contextPath}/auth', { 
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'acao=logout' // Envia a ação no corpo (Melhor prática para POST)
+                })
+                .then(() => {
+                    // Redireciona para a HOME, onde o navbar será recarregado como deslogado
+                    window.location.href = '${pageContext.request.contextPath}/home';
+                });
             }
         }
 

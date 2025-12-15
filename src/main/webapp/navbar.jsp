@@ -18,10 +18,15 @@
         color: #FF4500; 
         text-decoration: none;
     }
+    .navbar-links {
+        display: flex; /* Garante que os links da navbar links fiquem em linha */
+        align-items: center;
+        gap: 15px; /* Espaçamento entre os links */
+    }
     .navbar-links a {
         color: #333;
         text-decoration: none;
-        padding: 8px 15px;
+        padding: 8px 0px; /* Reduzindo o padding vertical para não interferir no fluxo */
         margin: 0 5px;
         font-size: 1em;
         transition: color 0.2s;
@@ -34,7 +39,7 @@
         align-items: center;
         gap: 15px;
     }
-    /* Botão de Ação (Login/Cadastro) */
+    /* Botão de Ação (Login/Cadastro - Azul) */
     .btn-login {
         background-color: #007bff;
         color: white;
@@ -43,14 +48,13 @@
         text-decoration: none;
         font-weight: bold;
         transition: background-color 0.2s;
-        /* Garantir que o botão do link e o button tenham o mesmo estilo */
         border: none;
         cursor: pointer;
     }
     .btn-login:hover {
         background-color: #0056b3;
     }
-    /* Estilo para o botão de Logout */
+    /* Estilo para o botão de Logout (Vermelho) */
     .btn-logout {
         background-color: #dc3545; /* Vermelho */
         color: white;
@@ -68,6 +72,14 @@
         color: #333;
         font-weight: 500;
         white-space: nowrap; /* Impede quebra de linha */
+    }
+    /* Estilo para o link de Gerenciamento (Funcionário) */
+    .manager-link {
+        color: #f0ad4e !important; /* Laranja/Amarelo */
+        font-weight: bold;
+    }
+    .manager-link:hover {
+        color: #ec971f !important;
     }
     /* Ícones */
     .icon-cart {
@@ -93,13 +105,20 @@
 </style>
 
 <nav class="navbar">
-    <a href="${pageContext.request.contextPath}/home" class="navbar-logo">LG Clothes</a>
+    <a href="${pageContext.request.contextPath}/home" class="navbar-logo">ARTWALK Inspire</a>
     
     <div class="navbar-links">
         <a href="#">Lançamentos</a>
         <a href="#">Tênis</a>
         <a href="#">Roupas</a>
         <a href="#">Acessórios</a>
+        
+        <%-- Lógica para exibir link de Gerenciamento APENAS para Funcionários --%>
+        <c:if test="${not empty sessionScope.funcionarioLogado}">
+            <a href="${pageContext.request.contextPath}/gerenciar-produtos" class="manager-link">
+                Painel de Produtos
+            </a>
+        </c:if>
     </div>
     
     <div class="navbar-actions">
@@ -111,34 +130,38 @@
             </c:if>
         </a>
 
-        <%-- LÓGICA DE EXIBIÇÃO: LOGIN VS. LOGOUT --%>
+        <%-- LÓGICA DE EXIBIÇÃO PRINCIPAL: FUNCIONÁRIO VS. CLIENTE VS. DESLOGADO --%>
         <c:choose>
-            <c:when test="${not empty sessionScope.clienteLogado}">
-                <%-- STATUS: LOGADO --%>
+            
+            <%-- ESTADO 1: FUNCIONÁRIO LOGADO --%>
+            <c:when test="${not empty sessionScope.funcionarioLogado}">
+                <span class="welcome-message">
+                    Olá, ${fn:split(sessionScope.funcionarioLogado.nome, ' ')[0]}! (Funcionario)
+                </span>
                 
+                <button onclick="fazerLogout()" class="btn-logout">Logout</button>
+            </c:when>
+            
+            <%-- ESTADO 2: CLIENTE LOGADO --%>
+            <c:when test="${not empty sessionScope.clienteLogado}">
                 <span class="welcome-message">
                     Olá, ${fn:split(sessionScope.clienteLogado.nome, ' ')[0]}!
                 </span>
                 
                 <button onclick="fazerLogout()" class="btn-logout">Logout</button>
-                
-                <%-- O link "Cadastrar" é removido quando logado, mas você pode adicionar
-                     um link para "Minha Conta" aqui se desejar. --%>
-                
             </c:when>
+            
+            <%-- ESTADO 3: DESLOGADO --%>
             <c:otherwise>
-                <%-- STATUS: DESLOGADO --%>
-                
                 <a href="${pageContext.request.contextPath}/login.jsp" class="btn-login">Login</a>
                 <a href="${pageContext.request.contextPath}/cadastro.jsp" title="Criar uma nova conta">Cadastrar</a>
-                
             </c:otherwise>
         </c:choose>
         
     </div>
 </nav>
 
-<%-- É fundamental incluir o script de logout se ele ainda não estiver em um arquivo JS global --%>
+<%-- Script de Logout (Usando AJAX para chamar o /auth com acao=logout) --%>
 <script>
     function fazerLogout() {
         if (confirm("Tem certeza que deseja sair da sua conta?")) {
@@ -150,7 +173,7 @@
             .then(response => response.json())
             .then(data => {
                 if(data.status === 'ok') {
-                    // Redireciona para /home (que recarregará a navbar deslogada)
+                    // Após logout bem-sucedido, redireciona para a home para recarregar a navbar
                     window.location.href = "${pageContext.request.contextPath}/home"; 
                 } else {
                     alert("Falha ao realizar logout.");
